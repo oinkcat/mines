@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Mines</string>
+    <string name="hello_world">Simple Minesweeper game</string>
+    <string name="exit_title">Exit</string>
+
+</resources>
