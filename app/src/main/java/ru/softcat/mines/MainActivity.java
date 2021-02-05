@@ -24,6 +24,11 @@ public class MainActivity
 		OPENED
 	}
 	
+	private enum GameEndType {
+		WIN,
+		LOSE
+	}
+	
 	final int GRID_SIZE = 10;
 	final int MINES_COUNT = 20;
 	
@@ -31,17 +36,19 @@ public class MainActivity
 	private int maxIndex;
 	
 	private CellType[] field;
+	
+	private boolean isPlaying;
+	
+	private int cellsLeft;
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu)
-	{
+	public boolean onCreateOptionsMenu(Menu menu) {
 		menu.add("Reset");
 		return super.onCreateOptionsMenu(menu);
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item)
-	{
+	public boolean onOptionsItemSelected(MenuItem item) {
 		resetGame();
 		return super.onOptionsItemSelected(item);
 	}
@@ -60,6 +67,9 @@ public class MainActivity
     }
 	
 	private void resetGame() {
+		isPlaying = true;
+		cellsLeft = GRID_SIZE * GRID_SIZE;
+		
 		initializeField();
 		createLayoutButtons();
 	}
@@ -117,18 +127,56 @@ public class MainActivity
 		boolean isHit = field[vw.getId()] == CellType.MINE;
 		
 		if(isHit) {
-			btn.setText("*");
-			btn.setClickable(false);
-			btn.setLongClickable(false);
-			applyCellTint(btn);
+			setGameOverState(GameEndType.LOSE);
 		} else {
 			openCell(vw.getId());
+			
+			if(cellsLeft <= MINES_COUNT) {
+				setGameOverState(GameEndType.WIN);
+			}
+		}
+	}
+	
+	private void setGameOverState(GameEndType type) {
+		isPlaying = false;
+		String message;
+		
+		if(type == GameEndType.WIN) {
+			message = "You win!";
+		} else {
+			message = "You lose";
+			revealAllMines();
+		}
+		
+		disableAllCellButtons();
+		
+		Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+	}
+	
+	private void disableAllCellButtons() {
+		for(int i = 0; i < field.length; i++) {
+			disableCellButton(getButtonFromId(i));
+		}
+	}
+
+	private void disableCellButton(Button btn) {
+		btn.setClickable(false);
+		btn.setLongClickable(false);
+	}
+	
+	private void revealAllMines() {
+		for(int i = 0; i < field.length; i++) {
+			if(field[i] == CellType.MINE) {
+				Button btn = getButtonFromId(i);
+				btn.setText("*");
+				btn.setTag(R.id.tag_marked, null);
+				applyCellTint(btn);
+			}
 		}
 	}
 
 	@Override
-	public boolean onLongClick(View vw)
-	{
+	public boolean onLongClick(View vw) {
 		Button btn = (Button)vw;
 		
 		if(btn.getTag(R.id.tag_marked) != null) {
@@ -167,10 +215,10 @@ public class MainActivity
 		}
 		
 		field[id] = CellType.OPENED;
+		cellsLeft--;
 		
-		Button btn = (Button)((FrameLayout)grid.getChildAt(id)).getChildAt(0);
-		btn.setClickable(false);
-		btn.setLongClickable(false);
+		Button btn = getButtonFromId(id);
+		disableCellButton(btn);
 		applyCellTint(btn);
 		
 		int numMines = countAdjacentMines(id);
@@ -184,6 +232,10 @@ public class MainActivity
 				}
 			});
 		}
+	}
+	
+	private Button getButtonFromId(int id) {
+		return (Button)((FrameLayout)grid.getChildAt(id)).getChildAt(0);
 	}
 	
 	private int countAdjacentMines(int id) {
