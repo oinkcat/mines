@@ -2,7 +2,10 @@
 <resources>
 
     <string name="app_name">Mines</string>
-    <string name="hello_world">Simple Minesweeper game</string>
-    <string name="exit_title">Exit</string>
+    <string name="left_text">Tiles left: %d</string>
+	<string name="win_msg">You win!</string>
+	<string name="lose_msg">You lose!</string>
+    <string name="exit_text">Exit</string>
+	<string name="new_text">New game</string>
 
 </resources>

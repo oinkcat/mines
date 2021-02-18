@@ -8,13 +8,15 @@
 	android:layout_weight="1">
 
 	<TextView
-		android:text="@string/hello_world"
+		android:id="@+id/message"
+		android:text="@string/left_text"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:padding="20sp"
 		android:layout_gravity="top"
 		android:gravity="center"
-		android:textStyle="bold" />
+		android:textStyle="bold"
+		android:textSize="18sp"/>
 
 	<FrameLayout
 		android:layout_width="match_parent"
@@ -27,9 +29,7 @@
 			android:layout_height="wrap_content"
 			android:rowCount="8"
 			android:columnCount="8"
-			android:layout_gravity="center_vertical">
-
-		</GridLayout>
+			android:layout_gravity="center_vertical"/>
 
 	</FrameLayout>
 
@@ -37,7 +37,7 @@
 		android:id="@+id/exitButton"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:text="@string/exit_title"
+		android:text="@string/exit_text"
 		android:onClick="exitClicked"/>
 
 </LinearLayout>

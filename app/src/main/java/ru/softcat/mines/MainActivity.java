@@ -5,14 +5,14 @@ import android.os.*;
 import android.view.*;
 import android.widget.*;
 import android.widget.GridLayout.LayoutParams;
-import android.view.View.OnClickListener;
 import android.util.Size;
 import android.graphics.*;
 import java.util.Random;
-import android.view.View.OnLongClickListener;
 import java.util.function.Consumer;
 import java.util.List;
 import java.util.ArrayList;
+import android.view.View.*;
+import android.content.res.*;
 
 public class MainActivity
 	extends Activity
@@ -33,6 +33,8 @@ public class MainActivity
 	final int MINES_COUNT = 20;
 	
 	private GridLayout grid;
+	private TextView messageText;
+	
 	private int maxIndex;
 	
 	private CellType[] field;
@@ -43,7 +45,7 @@ public class MainActivity
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		menu.add("Reset");
+		menu.add(getResources().getString(R.string.new_text));
 		return super.onCreateOptionsMenu(menu);
 	}
 
@@ -63,6 +65,8 @@ public class MainActivity
 		grid.setRowCount(GRID_SIZE);
 		grid.setColumnCount(GRID_SIZE);
 		
+		messageText = findViewById(R.id.message);
+		
 		resetGame();
     }
 	
@@ -72,6 +76,7 @@ public class MainActivity
 		
 		initializeField();
 		createLayoutButtons();
+		displayHowMuchLeft();
 	}
 	
 	private void initializeField() {
@@ -130,6 +135,7 @@ public class MainActivity
 			setGameOverState(GameEndType.LOSE);
 		} else {
 			openCell(vw.getId());
+			displayHowMuchLeft();
 			
 			if(cellsLeft <= MINES_COUNT) {
 				setGameOverState(GameEndType.WIN);
@@ -141,16 +147,18 @@ public class MainActivity
 		isPlaying = false;
 		String message;
 		
+		Resources resources = getResources();
+		
 		if(type == GameEndType.WIN) {
-			message = "You win!";
+			message = resources.getString(R.string.win_msg);
 		} else {
-			message = "You lose";
+			message = resources.getString(R.string.lose_msg);
 			revealAllMines();
 		}
 		
 		disableAllCellButtons();
 		
-		Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+		messageText.setText(message);
 	}
 	
 	private void disableAllCellButtons() {
@@ -268,6 +276,11 @@ public class MainActivity
 				}
 			}
 		}
+	}
+	
+	private void displayHowMuchLeft() {
+		String leftFmt = getResources().getString(R.string.left_text);
+		messageText.setText(String.format(leftFmt, cellsLeft)); 
 	}
 	
 	public void exitClicked(View v) {
