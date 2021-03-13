@@ -45,13 +45,13 @@ public class MainActivity
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		menu.add(getResources().getString(R.string.new_text));
+		menu.add(getResources().getString(R.string.exit_text));
 		return super.onCreateOptionsMenu(menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		resetGame();
+		this.finishAndRemoveTask();
 		return super.onOptionsItemSelected(item);
 	}
 	
@@ -283,7 +283,7 @@ public class MainActivity
 		messageText.setText(String.format(leftFmt, cellsLeft)); 
 	}
 	
-	public void exitClicked(View v) {
-		finishAndRemoveTask();
+	public void newGameClicked(View v) {
+		resetGame();
 	}
 }

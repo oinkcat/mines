@@ -34,11 +34,11 @@
 	</FrameLayout>
 
 	<Button
-		android:id="@+id/exitButton"
+		android:id="@+id/newGameButton"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:text="@string/exit_text"
-		android:onClick="exitClicked"/>
+		android:text="@string/new_text"
+		android:onClick="newGameClicked"/>
 
 </LinearLayout>
 
