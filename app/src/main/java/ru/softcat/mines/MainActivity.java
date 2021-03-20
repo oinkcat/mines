@@ -7,41 +7,27 @@ import android.widget.*;
 import android.widget.GridLayout.LayoutParams;
 import android.util.Size;
 import android.graphics.*;
-import java.util.Random;
-import java.util.function.Consumer;
 import java.util.List;
 import java.util.ArrayList;
 import android.view.View.*;
 import android.content.res.*;
 
+/** Game UI and interaction */
 public class MainActivity
 	extends Activity
-	implements OnClickListener, OnLongClickListener
+	implements OnClickListener, OnLongClickListener, MinesGameListener
 {
-	private enum CellType {
-		FREE,
-		MINE,
-		OPENED
+	private enum CellUiState {
+		DEFAULT,
+		MARKED,
+		OPEN,
+		EXPLODED
 	}
-	
-	private enum GameEndType {
-		WIN,
-		LOSE
-	}
-	
-	final int GRID_SIZE = 10;
-	final int MINES_COUNT = 20;
 	
 	private GridLayout grid;
 	private TextView messageText;
 	
-	private int maxIndex;
-	
-	private CellType[] field;
-	
-	private boolean isPlaying;
-	
-	private int cellsLeft;
+	private GameLogic game;
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -57,13 +43,15 @@ public class MainActivity
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+		game = new GameLogic();
+		
 		super.onCreate(savedInstanceState);
 		
         setContentView(R.layout.main);
 		
 		grid = findViewById(R.id.mainGrid);
-		grid.setRowCount(GRID_SIZE);
-		grid.setColumnCount(GRID_SIZE);
+		grid.setRowCount(game.getFieldSize());
+		grid.setColumnCount(game.getFieldSize());
 		
 		messageText = findViewById(R.id.message);
 		
@@ -71,30 +59,35 @@ public class MainActivity
     }
 	
 	private void resetGame() {
-		isPlaying = true;
-		cellsLeft = GRID_SIZE * GRID_SIZE;
+		game.initialize(this);
 		
-		initializeField();
 		createLayoutButtons();
 		displayHowMuchLeft();
 	}
-	
-	private void initializeField() {
-		maxIndex = GRID_SIZE * GRID_SIZE;
-		field = new CellType[maxIndex];
-		for(int i = 0; i < maxIndex; i++) {
-			field[i] = CellType.FREE;
+
+	public void OnCellsOpened(ArrayList<GameLogic.CellInfo> openCells) {
+		for(GameLogic.CellInfo info: openCells) {
+			if(info.getNumAdjacent() > 0) {
+				Button btn = getButtonFromId(info.getId());
+				btn.setText(Integer.toString(info.getNumAdjacent()));
+			}
+			applyCellTint(info.getId(), CellUiState.OPEN);
 		}
 		
-		Random rng = new Random();
-		
-		for(int i = 0; i < MINES_COUNT; i++) {
-			int idx = -1;
-			do {
-				idx = rng.nextInt(maxIndex);
-			} while(field[idx] == CellType.MINE);
-			field[idx] = CellType.MINE;
+		displayHowMuchLeft();
+	}
+
+	public void OnWinGame() {
+		setGameOverUiState(true);
+	}
+
+	public void OnLoseGame(ArrayList<Integer> mineCellIds) {
+		for(int cellId : mineCellIds) {
+			Button btn = getButtonFromId(cellId);
+			btn.setText("*");
+			applyCellTint(cellId, CellUiState.EXPLODED);
 		}
+		setGameOverUiState(false);
 	}
 	
 	private void createLayoutButtons() {
@@ -129,40 +122,21 @@ public class MainActivity
 		Button btn = (Button)vw;
 		btn.setTag(R.id.tag_marked, null);
 		
-		boolean isHit = field[vw.getId()] == CellType.MINE;
-		
-		if(isHit) {
-			setGameOverState(GameEndType.LOSE);
-		} else {
-			openCell(vw.getId());
-			displayHowMuchLeft();
-			
-			if(cellsLeft <= MINES_COUNT) {
-				setGameOverState(GameEndType.WIN);
-			}
-		}
+		game.openCell(btn.getId());
 	}
 	
-	private void setGameOverState(GameEndType type) {
-		isPlaying = false;
-		String message;
-		
-		Resources resources = getResources();
-		
-		if(type == GameEndType.WIN) {
-			message = resources.getString(R.string.win_msg);
-		} else {
-			message = resources.getString(R.string.lose_msg);
-			revealAllMines();
-		}
+	private void setGameOverUiState(boolean isaWin) {
+		int msgResId = isaWin ? R.string.win_msg : R.string.lose_msg;
+		String message = getResources().getString(msgResId);
+		messageText.setText(message);
 		
 		disableAllCellButtons();
-		
-		messageText.setText(message);
 	}
 	
 	private void disableAllCellButtons() {
-		for(int i = 0; i < field.length; i++) {
+		int numCells = game.getFieldSize() * game.getFieldSize();
+		
+		for(int i = 0; i < numCells; i++) {
 			disableCellButton(getButtonFromId(i));
 		}
 	}
@@ -171,43 +145,36 @@ public class MainActivity
 		btn.setClickable(false);
 		btn.setLongClickable(false);
 	}
-	
-	private void revealAllMines() {
-		for(int i = 0; i < field.length; i++) {
-			if(field[i] == CellType.MINE) {
-				Button btn = getButtonFromId(i);
-				btn.setText("*");
-				btn.setTag(R.id.tag_marked, null);
-				applyCellTint(btn);
-			}
-		}
-	}
 
 	@Override
 	public boolean onLongClick(View vw) {
 		Button btn = (Button)vw;
 		
-		if(btn.getTag(R.id.tag_marked) != null) {
+		boolean prevMarked = btn.getTag(R.id.tag_marked) != null;
+		if(prevMarked) {
 			btn.setTag(R.id.tag_marked, null);
 		} else {
 			btn.setTag(R.id.tag_marked, true);
 		}
 		
-		applyCellTint(btn);
+		CellUiState newUiState = prevMarked 
+			? CellUiState.DEFAULT
+			: CellUiState.MARKED;
+		applyCellTint(btn.getId(), newUiState);
 		
 		return true;
 	}
 	
-	private void applyCellTint(Button btn) {
-		int id = btn.getId();
-		CellType type = field[id];
+	private void applyCellTint(int cellId, CellUiState state) {
+		Button btn = getButtonFromId(cellId);
+		
 		int cellColor = 0;
 		
-		if(btn.getTag(R.id.tag_marked) != null) {
+		if(state == CellUiState.MARKED) {
 			cellColor = Color.GREEN;
-		} else if(type == CellType.MINE) {
+		} else if(state == CellUiState.EXPLODED) {
 			cellColor = Color.RED;
-		} else if(type == CellType.OPENED) {
+		} else if(state == CellUiState.OPEN) {
 			cellColor = Color.YELLOW;
 		} else {
 			btn.getBackground().clearColorFilter();
@@ -217,70 +184,13 @@ public class MainActivity
 		btn.getBackground().setColorFilter(cellColor, PorterDuff.Mode.MULTIPLY);
 	}
 	
-	private void openCell(int id) {
-		if(id < 0 || id >= maxIndex || field[id] != CellType.FREE) {
-			return;
-		}
-		
-		field[id] = CellType.OPENED;
-		cellsLeft--;
-		
-		Button btn = getButtonFromId(id);
-		disableCellButton(btn);
-		applyCellTint(btn);
-		
-		int numMines = countAdjacentMines(id);
-		if(numMines > 0) {
-			btn.setText(String.valueOf(numMines));
-		} else {
-			forAdjacent(id, new Consumer<Integer>() {
-				@Override
-				public void accept(Integer id) {
-					openCell(id);
-				}
-			});
-		}
-	}
-	
 	private Button getButtonFromId(int id) {
 		return (Button)((FrameLayout)grid.getChildAt(id)).getChildAt(0);
 	}
 	
-	private int countAdjacentMines(int id) {
-		final List<Integer> adjacentIds = new ArrayList<>();
-		
-		forAdjacent(id, new Consumer<Integer>() {
-			@Override
-			public void accept(Integer testId) {
-				if(field[testId] == CellType.MINE) {
-					adjacentIds.add(1);
-				}
-			}
-		});
-		
-		return adjacentIds.size();
-	}
-	
-	private void forAdjacent(int id, Consumer<Integer> action) {
-		int row = id / GRID_SIZE;
-		int col = id % GRID_SIZE;
-		
-		for(int rd = -1; rd <= 1; rd++) {
-			if(row + rd < 0 || row + rd >= GRID_SIZE) {
-				continue;
-			}
-			for(int cd = -1; cd <= 1; cd++) {	
-				if(col + cd >= 0 && col + cd < GRID_SIZE) {
-					int testId = id + GRID_SIZE * rd + cd;	
-					action.accept(testId);
-				}
-			}
-		}
-	}
-	
 	private void displayHowMuchLeft() {
 		String leftFmt = getResources().getString(R.string.left_text);
-		messageText.setText(String.format(leftFmt, cellsLeft)); 
+		messageText.setText(String.format(leftFmt, game.getCellsLeft()));
 	}
 	
 	public void newGameClicked(View v) {
