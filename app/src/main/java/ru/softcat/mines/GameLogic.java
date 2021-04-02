@@ -39,6 +39,8 @@ public class GameLogic
 	private CellType[] field;
 
 	private boolean isPlaying;
+	
+	private boolean firstCellOpen;
 
 	private int cellsLeft;
 	
@@ -61,6 +63,7 @@ public class GameLogic
 		
 		isPlaying = true;
 		cellsLeft = GRID_SIZE * GRID_SIZE;
+		firstCellOpen = false;
 		
 		initializeField();
 	}
@@ -72,21 +75,33 @@ public class GameLogic
 			field[i] = CellType.FREE;
 		}
 
-		Random rng = new Random();
-
 		for(int i = 0; i < MINES_COUNT; i++) {
-			int idx = -1;
-			do {
-				idx = rng.nextInt(maxIndex);
-			} while(field[idx] == CellType.MINE);
+			int idx = findCellForMine();
 			field[idx] = CellType.MINE;
 		}
+	}
+	
+	private int findCellForMine() {
+		Random rng = new Random();
+		
+		int idx = -1;
+		do {
+			idx = rng.nextInt(maxIndex);
+		} while(field[idx] == CellType.MINE);
+		
+		return idx;
 	}
 	
 	public void openCell(int id) {
 		if(!isPlaying) { return; }
 		
 		boolean isHit = field[id] == CellType.MINE;
+		
+		if(isHit && !firstCellOpen) {
+			moveMineAway(id);
+			isHit = false;
+		}
+		firstCellOpen = true;
 
 		if(isHit) {
 			listener.OnLoseGame(getAllMineCellIds());
@@ -101,6 +116,17 @@ public class GameLogic
 				listener.OnWinGame();
 			}
 		}
+	}
+	
+	private void moveMineAway(int prevCellId) {
+		int newCellId = prevCellId;
+		
+		while(newCellId == prevCellId) {
+			newCellId = findCellForMine();
+		}
+		
+		field[prevCellId] = CellType.FREE;
+		field[newCellId] = CellType.MINE;
 	}
 	
 	private ArrayList<Integer> getAllMineCellIds() {
