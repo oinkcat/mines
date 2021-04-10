@@ -6,6 +6,11 @@ import java.util.function.Consumer;
 /** Minesweeper game internal logic */
 public class GameLogic
 {
+	public enum GameDifficulty {
+		EASY,
+		HARD
+	}
+	
 	public class CellInfo {
 		private int id;
 		
@@ -32,7 +37,9 @@ public class GameLogic
 	}
 
 	final int GRID_SIZE = 10;
-	final int MINES_COUNT = 20;
+	
+	final int MINES_COUNT_EASY = 10;
+	final int MINES_COUNT_HARD = 20;
 
 	private int maxIndex;
 
@@ -43,6 +50,8 @@ public class GameLogic
 	private boolean firstCellOpen;
 
 	private int cellsLeft;
+	
+	private int minesCount;
 	
 	private MinesGameListener listener;
 	
@@ -58,12 +67,16 @@ public class GameLogic
 		return isPlaying;
 	}
 	
-	public void initialize(MinesGameListener listener) {
+	public void initialize(MinesGameListener listener, GameDifficulty diff) {
 		this.listener = listener;
 		
 		isPlaying = true;
 		cellsLeft = GRID_SIZE * GRID_SIZE;
 		firstCellOpen = false;
+		
+		minesCount = (diff == GameDifficulty.EASY)
+			? MINES_COUNT_EASY
+			: MINES_COUNT_HARD;
 		
 		initializeField();
 	}
@@ -75,7 +88,7 @@ public class GameLogic
 			field[i] = CellType.FREE;
 		}
 
-		for(int i = 0; i < MINES_COUNT; i++) {
+		for(int i = 0; i < minesCount; i++) {
 			int idx = findCellForMine();
 			field[idx] = CellType.MINE;
 		}
@@ -111,7 +124,7 @@ public class GameLogic
 			tryOpenAdjacentCells(id, allOpen);
 			listener.OnCellsOpened(allOpen);
 
-			if(cellsLeft <= MINES_COUNT) {
+			if(cellsLeft <= minesCount) {
 				setGameOverState();
 				listener.OnWinGame();
 			}

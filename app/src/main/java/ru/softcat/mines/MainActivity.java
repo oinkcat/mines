@@ -11,11 +11,15 @@ import java.util.List;
 import java.util.ArrayList;
 import android.view.View.*;
 import android.content.res.*;
+import android.content.*;
 
 /** Game UI and interaction */
 public class MainActivity
 	extends Activity
-	implements OnClickListener, OnLongClickListener, MinesGameListener
+	implements OnClickListener, 
+			   OnLongClickListener, 
+			   MinesGameListener,
+			   DialogInterface.OnClickListener
 {
 	private enum CellUiState {
 		DEFAULT,
@@ -55,11 +59,11 @@ public class MainActivity
 		
 		messageText = findViewById(R.id.message);
 		
-		resetGame();
+		resetGame(GameLogic.GameDifficulty.HARD);
     }
 	
-	private void resetGame() {
-		game.initialize(this);
+	private void resetGame(GameLogic.GameDifficulty difficulty) {
+		game.initialize(this, difficulty);
 		
 		createLayoutButtons();
 		displayHowMuchLeft();
@@ -194,6 +198,21 @@ public class MainActivity
 	}
 	
 	public void newGameClicked(View v) {
-		resetGame();
+		new AlertDialog.Builder(this)
+			.setTitle("New game")
+			.setMessage("Choose diffuculty")
+			.setPositiveButton("Hard", this)
+			.setNegativeButton("Easy", this)
+			.show();
+	}
+
+	@Override
+	public void onClick(DialogInterface dlg, int idx)
+	{
+		if(idx == dlg.BUTTON_POSITIVE) {
+			resetGame(GameLogic.GameDifficulty.HARD);
+		} else {
+			resetGame(GameLogic.GameDifficulty.EASY);
+		}
 	}
 }
