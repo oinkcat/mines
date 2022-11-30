@@ -59,6 +59,10 @@ public class GameLogic
 		return GRID_SIZE;
 	}
 	
+	public int getMinesCount() {
+		return minesCount;
+	}
+	
 	public int getCellsLeft() {
 		return cellsLeft;
 	}

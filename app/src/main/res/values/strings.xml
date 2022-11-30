@@ -3,6 +3,7 @@
 
     <string name="app_name">Mines</string>
     <string name="left_text">Tiles left: %d</string>
+	<string name="no_mines_text"># of mines: %d</string>
 	<string name="win_msg">You win!</string>
 	<string name="lose_msg">You lose!</string>
     <string name="exit_text">Exit</string>

@@ -12,7 +12,17 @@
 		android:text="@string/left_text"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:padding="20sp"
+		android:paddingTop="20dp"
+		android:layout_gravity="top"
+		android:gravity="center"
+		android:textStyle="bold"
+		android:textSize="18sp"/>
+	
+	<TextView
+		android:id="@+id/mines_message"
+		android:text="@string/no_mines_text"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
 		android:layout_gravity="top"
 		android:gravity="center"
 		android:textStyle="bold"

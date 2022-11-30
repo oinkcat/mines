@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import android.view.View.*;
 import android.content.res.*;
 import android.content.*;
+import android.graphics.drawable.*;
 
 /** Game UI and interaction */
 public class MainActivity
@@ -30,6 +31,9 @@ public class MainActivity
 	
 	private GridLayout grid;
 	private TextView messageText;
+	private TextView noMinesText;
+	
+	private Drawable flagPic;
 	
 	private GameLogic game;
 
@@ -48,6 +52,7 @@ public class MainActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 		game = new GameLogic();
+		flagPic = getResources().getDrawable(R.drawable.flag);
 		
 		super.onCreate(savedInstanceState);
 		
@@ -58,12 +63,16 @@ public class MainActivity
 		grid.setColumnCount(game.getFieldSize());
 		
 		messageText = findViewById(R.id.message);
+		noMinesText = findViewById(R.id.mines_message);
 		
 		resetGame(GameLogic.GameDifficulty.HARD);
     }
 	
 	private void resetGame(GameLogic.GameDifficulty difficulty) {
 		game.initialize(this, difficulty);
+		
+		String noMinesFmt = getResources().getString(R.string.no_mines_text);
+		noMinesText.setText(String.format(noMinesFmt, game.getMinesCount()));
 		
 		createLayoutButtons();
 		displayHowMuchLeft();
@@ -75,7 +84,7 @@ public class MainActivity
 				Button btn = getButtonFromId(info.getId());
 				btn.setText(Integer.toString(info.getNumAdjacent()));
 			}
-			applyCellTint(info.getId(), CellUiState.OPEN);
+			applyCellVisual(info.getId(), CellUiState.OPEN);
 		}
 		
 		displayHowMuchLeft();
@@ -88,8 +97,11 @@ public class MainActivity
 	public void OnLoseGame(ArrayList<Integer> mineCellIds) {
 		for(int cellId : mineCellIds) {
 			Button btn = getButtonFromId(cellId);
-			btn.setText("*");
-			applyCellTint(cellId, CellUiState.EXPLODED);
+			
+			if(btn.getTag(R.id.tag_marked) == null) {
+				btn.setText("*");
+				applyCellVisual(cellId, CellUiState.EXPLODED);
+			}
 		}
 		setGameOverUiState(false);
 	}
@@ -164,28 +176,31 @@ public class MainActivity
 		CellUiState newUiState = prevMarked 
 			? CellUiState.DEFAULT
 			: CellUiState.MARKED;
-		applyCellTint(btn.getId(), newUiState);
+		applyCellVisual(btn.getId(), newUiState);
 		
 		return true;
 	}
 	
-	private void applyCellTint(int cellId, CellUiState state) {
+	private void applyCellVisual(int cellId, CellUiState state) {
 		Button btn = getButtonFromId(cellId);
 		
 		int cellColor = 0;
+		Drawable cellPic = null;
 		
 		if(state == CellUiState.MARKED) {
-			cellColor = Color.GREEN;
+			cellColor = Color.YELLOW;
+			cellPic = flagPic;
 		} else if(state == CellUiState.EXPLODED) {
 			cellColor = Color.RED;
 		} else if(state == CellUiState.OPEN) {
-			cellColor = Color.YELLOW;
+			cellColor = Color.rgb(200, 255, 200);
 		} else {
 			btn.getBackground().clearColorFilter();
 			return;
 		}
 		
 		btn.getBackground().setColorFilter(cellColor, PorterDuff.Mode.MULTIPLY);
+		btn.setForeground(cellPic);
 	}
 	
 	private Button getButtonFromId(int id) {
