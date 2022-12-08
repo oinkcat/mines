@@ -8,5 +8,6 @@
 	<string name="lose_msg">You lose!</string>
     <string name="exit_text">Exit</string>
 	<string name="new_text">New game</string>
+    <string name="congrats_msg">Congratulations!</string>
 
 </resources>

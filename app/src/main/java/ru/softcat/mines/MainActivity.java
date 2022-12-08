@@ -34,6 +34,7 @@ public class MainActivity
 	private TextView noMinesText;
 	
 	private Drawable flagPic;
+	private Drawable bangPic;
 	
 	private GameLogic game;
 
@@ -53,6 +54,7 @@ public class MainActivity
     protected void onCreate(Bundle savedInstanceState) {
 		game = new GameLogic();
 		flagPic = getResources().getDrawable(R.drawable.flag);
+		bangPic = getResources().getDrawable(R.drawable.explosion);
 		
 		super.onCreate(savedInstanceState);
 		
@@ -147,6 +149,10 @@ public class MainActivity
 		messageText.setText(message);
 		
 		disableAllCellButtons();
+        
+        if(isaWin) {
+            Toast.makeText(this, R.string.congrats_msg, Toast.LENGTH_LONG).show();
+        }
 	}
 	
 	private void disableAllCellButtons() {
@@ -192,6 +198,7 @@ public class MainActivity
 			cellPic = flagPic;
 		} else if(state == CellUiState.EXPLODED) {
 			cellColor = Color.RED;
+			cellPic = bangPic;
 		} else if(state == CellUiState.OPEN) {
 			cellColor = Color.rgb(200, 255, 200);
 		} else {
